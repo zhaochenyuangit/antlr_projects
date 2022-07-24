@@ -78,14 +78,16 @@ message(STATUS "FOUND src ${src}")
     "${Java_JAVA_EXECUTABLE}" -Xmx500M -cp \"${ANTLR_JAR_LOCATION}:$$CLASSPATH\" org.antlr.v4.gui.TestRig sysY compUnit -gui ${PROJECT_SOURCE_DIR}/${src}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/gui
     DEPENDS
-    ${antlr4_for_gui}
+    ${PROJECT_SOURCE_DIR}/sysY.g4
     )
+
   get_filename_component(gui_target ${src} NAME_WE)
   add_custom_target(${gui_target}
   COMMAND
   echo "show graph for ${src}"
   DEPENDS
   ${src}
+  ${antlr4_for_gui}
   )
 endforeach()
 

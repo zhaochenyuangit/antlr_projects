@@ -100,7 +100,7 @@ varDef
     ;
 
 initVal
-    : exp # scalarInitVal
+    : arithExp # scalarInitVal
     | '{' (initVal (',' initVal)* )? '}' # listInitval
     ;
 
@@ -110,84 +110,72 @@ funcType : 'void' | 'int' | 'float';
 
 funcFParams : funcFParam (',' funcFParam)*;
 
-funcFParam : bType Identifier ('[' ']' ('[' constExp ']')* )?;
+// for array as param, the length of first dim is ommited, written as [] literal 
+funcFParam : bType Identifier ('[' ']' ('[' constExp ']')* )?; 
 
 block : '{' (blockItem)* '}';
 
 blockItem : decl | stmt;
 
 stmt
-    : lVal '=' exp ';' # assignment // assignment in sysY do not return a value
-    | (exp)? ';' # expStmt
+    : lVal '=' arithExp ';' # assignment // assignment in sysY do not return a value
+    | (arithExp)? ';' # expStmt
     | block # blockStmt
-    | 'if' '(' cond ')' stmt # ifStmt1
-    | 'if' '(' cond ')' stmt 'else' stmt # ifStmt2
-    | 'while' '(' cond ')' stmt # whileStmt
+    | 'if' '(' condExp ')' stmt # ifStmt1
+    | 'if' '(' condExp ')' stmt 'else' stmt # ifStmt2
+    | 'while' '(' condExp ')' stmt # whileStmt
     | 'break' ';' # breakStmt
     | 'continue' ';' # continueStmt
-    | 'return' (exp)? ';' # returnStmt
+    | 'return' (arithExp)? ';' # returnStmt
     ;
 
-exp : addExp;
-
-cond : lOrExp;
-
-lVal : Identifier ('[' exp ']')*;
-
-primaryExp
-    : '(' exp ')' # primaryExp1
-    | lVal # primaryExp2
-    | number # primaryExp3
-    ;
+lVal : Identifier ('[' arithExp ']')*;
 
 number : IntConst    # number1
        | FloatConst  # number2
        ;
 
-unaryExp
-    : primaryExp # unary1
-    | Identifier '(' (funcRParams)? ')' # unary2
-    | unaryOp unaryExp # unary3
-    ;
-
-unaryOp : '+' | '-' | '!';
+// expression priority
+// unary : + - !
+// mul: * / %
+// add: + -
+// relation: < > <= >=
+// eq: == !=
+// and: &&
+// or: ||
 
 funcRParams : funcRParam (',' funcRParam)*;
 
 funcRParam
-    : exp # expAsRParam
+    : arithExp # expAsRParam
     | STRING # stringAsRParam
     ;
 
-mulExp
-    : unaryExp # mul1
-    | mulExp ('*' | '/' | '%') unaryExp # mul2
+unaryExp
+    : lVal # unary1
+    | number # unary2
+    | '(' arithExp ')' # unary3
+    | Identifier '(' (funcRParams)? ')' # unary4
+    | ('+' | '-' | '!') unaryExp # unary5
     ;
 
-addExp
-    : mulExp # add1
-    | addExp ('+' | '-') mulExp # add2
+// distinguish arithExp from condExp because the sysY language reference
+// states that function-returned values must be int or float
+// and initValue, returnValue, constValue can only be arithmetic values
+arithExp
+    : unaryExp # arith1
+    | arithExp  ('*' | '/' | '%') unaryExp # arith2
+    | arithExp ('+' | '-') arithExp # arith3
     ;
 
-relExp
-    : addExp # rel1
-    | relExp ('<' | '>' | '<=' | '>=') addExp # rel2
-    ;
-eqExp
-    : relExp # eq1
-    | eqExp ('==' | '!=') relExp # eq2
-    ;
-
-lAndExp
-    : eqExp # lAnd1
-    | lAndExp '&&' eqExp # lAnd2
+condExp
+    : arithExp  # cond1
+    | condExp ('<' | '>' | '<=' | '>=') arithExp # cond2
+    | condExp ('==' | '!=') condExp # cond3
+    | condExp '&&' condExp # cond4
+    | condExp'||' condExp # cond5
     ;
 
-lOrExp
-    : lAndExp # lOr1
-    | lOrExp '||' lAndExp # lOr2
-    ;
-
-constExp // constExpr must be a compile-time constant
-    : addExp
+constExp // constExp must be a compile-time arith constant
+    : arithExp
     ;
