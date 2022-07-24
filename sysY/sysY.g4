@@ -1,5 +1,5 @@
 grammar sysY;
-
+// Here starts the Lexer
 // keyword
 Int : 'int';
 Void: 'void';
@@ -41,22 +41,22 @@ LE : '<=';
 GT : '>';
 GE : '>=';
 
-
-// integer, identifier
-IntLiteral
+// literals
+IntConst
     :  Digit
     | '0x'[0-9a-fA-F]+
     | '0X'[0-9a-fA-F]+
+    ;
+
+FloatConst
+    : Digit '.' Digit*
+    |       '.' Digit+
     ;
 
 Identifier
     : [a-zA-Z_][a-zA-Z_0-9]*
     ;
 
-FloatLiteral
-    : Digit '.' Digit*
-    |       '.' Digit+
-    ;
 
 fragment
 Digit: [0-9]+;
@@ -66,6 +66,7 @@ STRING : '"'(ESC|.)*?'"';
 fragment
 ESC : '\\"'|'\\\\';
 
+// skip the comments and blanks
 WS : 
     [ \t\r\n] -> skip
     ;
@@ -73,6 +74,8 @@ WS :
 LINE_COMMENT : '//' .*? '\r'? '\n' -> skip;
 COMMENT      :'/*'.*?'*/'-> skip ;
 
+
+// Here starts the Parser
 compUnit : (decl | funcDef)* EOF;
 
 decl : constDecl | varDecl;
@@ -103,7 +106,7 @@ initVal
 
 funcDef : funcType Identifier '(' (funcFParams)? ')' block;
 
-funcType : 'void' | 'int';
+funcType : 'void' | 'int' | 'float';
 
 funcFParams : funcFParam (',' funcFParam)*;
 
@@ -114,7 +117,7 @@ block : '{' (blockItem)* '}';
 blockItem : decl | stmt;
 
 stmt
-    : lVal '=' exp ';' # assignment
+    : lVal '=' exp ';' # assignment // assignment in sysY do not return a value
     | (exp)? ';' # expStmt
     | block # blockStmt
     | 'if' '(' cond ')' stmt # ifStmt1
@@ -137,8 +140,9 @@ primaryExp
     | number # primaryExp3
     ;
 
-number : IntLiteral
-       | FloatLiteral;
+number : IntConst    # number1
+       | FloatConst  # number2
+       ;
 
 unaryExp
     : primaryExp # unary1
@@ -184,6 +188,6 @@ lOrExp
     | lOrExp '||' lAndExp # lOr2
     ;
 
-constExp
+constExp // constExpr must be a compile-time constant
     : addExp
     ;
