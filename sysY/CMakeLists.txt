@@ -2,11 +2,37 @@ cmake_minimum_required(VERSION 3.14)
 project(antlr-sysY)
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(sysY main.cpp)
-
 set(ANTLR_RUNTIME_SOURCE_DIR /home/zhao/Downloads/antlr4/runtime/Cpp)
+set(antlr4_generated_src
+   ${CMAKE_BINARY_DIR}/generated/sysYLexer.cpp 
+   ${CMAKE_BINARY_DIR}/generated/sysYParser.cpp
+  # ${CMAKE_BINARY_DIR}/generated/sysYBaseListener.cpp
+   ${CMAKE_BINARY_DIR}/generated/sysYBaseVisitor.cpp
+ )
 
-target_include_directories(sysY PRIVATE 
+
+set(ANTLR_JAR_LOCATION /usr/local/lib/antlr-4.10.1-complete.jar)
+find_program(Java_JAVA_EXECUTABLE "java")
+find_program(Java_JAVAC_EXECUTABLE "javac")
+add_custom_target(GenerateParser DEPENDS ${antlr4_generated_src})
+
+add_custom_command(OUTPUT ${antlr4_generated_src} ALL
+   COMMAND 
+   ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/generated/
+   COMMAND
+   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror 
+   -Dlanguage=Cpp -no-listener -visitor 
+   -o ${CMAKE_BINARY_DIR}/generated 
+   #-package antlrcpptest 
+   ${PROJECT_SOURCE_DIR}/sysY.g4 
+   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+   DEPENDS ${PROJECT_SOURCE_DIR}/sysY.g4   
+   )
+
+set(BIN_NAME sysY-compiler)
+add_executable(${BIN_NAME} ${CMAKE_SOURCE_DIR}/frontend/main.cpp)
+
+target_include_directories(${BIN_NAME} PRIVATE 
   ${ANTLR_RUNTIME_SOURCE_DIR}/runtime/src
   ${ANTLR_RUNTIME_SOURCE_DIR}/runtime/src/misc
   ${ANTLR_RUNTIME_SOURCE_DIR}/runtime/src/atn
@@ -15,50 +41,25 @@ target_include_directories(sysY PRIVATE
   ${ANTLR_RUNTIME_SOURCE_DIR}/runtime/src/support
   )
 
-target_include_directories(sysY PRIVATE ${CMAKE_SOURCE_DIR}/generated)
+target_include_directories(${BIN_NAME} PRIVATE ${CMAKE_BINARY_DIR}/generated)
 
-target_link_libraries(sysY antlr4-runtime)
-
-set(antlr4_generated_src
-   ${PROJECT_SOURCE_DIR}/generated/sysYLexer.cpp 
-   ${PROJECT_SOURCE_DIR}/generated/sysYParser.cpp
-   ${PROJECT_SOURCE_DIR}/generated/sysYBaseListener.cpp
-   ${PROJECT_SOURCE_DIR}/generated/sysYBaseVisitor.cpp
-   ${PROJECT_SOURCE_DIR}/generated/sysYBaseListener.cpp
-   ${PROJECT_SOURCE_DIR}/generated/sysYBaseVisitor.cpp
- )
-target_sources(sysY PRIVATE ${antlr4_generated_src})
-
-set(ANTLR_JAR_LOCATION /usr/local/lib/antlr-4.10.1-complete.jar)
-find_program(Java_JAVA_EXECUTABLE "java")
-find_program(Java_JAVAC_EXECUTABLE "javac")
-add_custom_target(GenerateParser DEPENDS ${antlr4_generated_src})
-
-add_custom_command(OUTPUT ${antlr4_generated_src}
-   COMMAND 
-   ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/generated/
-   COMMAND
-   "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror 
-   -Dlanguage=Cpp -listener -visitor 
-   -o ${PROJECT_SOURCE_DIR}/generated 
-   #-package antlrcpptest 
-   ${PROJECT_SOURCE_DIR}/sysY.g4 
-   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-   DEPENDS ${PROJECT_SOURCE_DIR}/sysY.g4   
-   )
+target_link_libraries(${BIN_NAME} antlr4-runtime)
+add_dependencies(${BIN_NAME} GenerateParser)
+target_sources(${BIN_NAME}  PRIVATE ${antlr4_generated_src})
+   
 
 set(antlr4_for_gui
-   ${PROJECT_SOURCE_DIR}/gui/sysYLexer.java 
-   ${PROJECT_SOURCE_DIR}/gui/sysYParser.java 
-   ${PROJECT_SOURCE_DIR}/gui/sysYBaseListener.java 
-   ${PROJECT_SOURCE_DIR}/gui/sysYListener.java 
+   ${CMAKE_BINARY_DIR}/gui/sysYLexer.java 
+   ${CMAKE_BINARY_DIR}/gui/sysYParser.java 
+   ${CMAKE_BINARY_DIR}/gui/sysYBaseListener.java 
+   ${CMAKE_BINARY_DIR}/gui/sysYListener.java 
  )
 add_custom_command(OUTPUT ${antlr4_for_gui}
    COMMAND 
-   ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/gui/
+   ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/gui/
    COMMAND
    "${Java_JAVA_EXECUTABLE}" -jar ${ANTLR_JAR_LOCATION} -Werror 
-   -o ${PROJECT_SOURCE_DIR}/gui 
+   -o ${CMAKE_BINARY_DIR}/gui 
    ${PROJECT_SOURCE_DIR}/sysY.g4 
    COMMAND
    ${Java_JAVAC_EXECUTABLE} ${antlr4_for_gui} 
@@ -76,7 +77,7 @@ message(STATUS "FOUND src ${src}")
     gvim ${PROJECT_SOURCE_DIR}/${src}
     COMMAND
     "${Java_JAVA_EXECUTABLE}" -Xmx500M -cp \"${ANTLR_JAR_LOCATION}:$$CLASSPATH\" org.antlr.v4.gui.TestRig sysY compUnit -gui ${PROJECT_SOURCE_DIR}/${src}
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/gui
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/gui
     DEPENDS
     ${PROJECT_SOURCE_DIR}/sysY.g4
     )
@@ -91,5 +92,11 @@ message(STATUS "FOUND src ${src}")
   )
 endforeach()
 
-add_dependencies(sysY GenerateParser)
 add_compile_options(-g -std=c++17 -O2)
+
+add_custom_target(clean-all
+                COMMAND make clean
+                COMMAND rm -rf ${CMAKE_BINARY_DIR}/generated
+                COMMAND rm -rf ${CMAKE_BINARY_DIR}/gui
+                )
+

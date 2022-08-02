@@ -25,21 +25,24 @@ Semicolon : ';';
 Question : '?';
 Colon : ':';
 
-Minus : '-';
-Exclamation : '!';
-Tilde : '~';
-Addition : '+';
-Multiplication : '*';
-Division : '/';
-Modulo : '%';
-LAND : '&&';
-LOR : '||';
+ADD : '+';
+SUB : '-';
+MUL : '*';
+DIV : '/';
+MOD : '%';
+
+NOT : '!';
+AND : '&&';
+OR : '||';
 EQ : '==';
 NEQ : '!=';
 LT : '<';
 LE : '<=';
 GT : '>';
 GE : '>=';
+
+Tilde : '~';
+
 
 // literals
 IntConst
@@ -131,9 +134,8 @@ stmt
 
 lVal : Identifier ('[' arithExp ']')*;
 
-number : IntConst    # number1
-       | FloatConst  # number2
-       ;
+intNumber :  IntConst;
+floatNumber : FloatConst;
 
 // expression priority
 // unary : + - !
@@ -151,12 +153,17 @@ funcRParam
     | STRING # stringAsRParam
     ;
 
+primaryExp
+    : lVal # primary1
+    | intNumber # primary2
+    | floatNumber # primary3 
+    | '(' arithExp ')' # primary4
+    ;
+
 unaryExp
-    : lVal # unary1
-    | number # unary2
-    | '(' arithExp ')' # unary3
-    | Identifier '(' (funcRParams)? ')' # unary4
-    | ('+' | '-' | '!') unaryExp # unary5
+    : primaryExp # unary1
+    | ('+' | '-' | '!') unaryExp # unary2
+    | Identifier '(' (funcRParams)? ')' # unary3
     ;
 
 // distinguish arithExp from condExp because the sysY language reference

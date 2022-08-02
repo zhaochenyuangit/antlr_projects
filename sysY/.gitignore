@@ -2,3 +2,4 @@ build/
 generated/
 gui/
 .antlr/
+.vscode/
