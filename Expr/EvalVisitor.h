@@ -3,10 +3,11 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <map>
 
 class EvalVisitor : public ExprBaseVisitor
 {
-    std::pair<std::string, int64_t> map{};
+    std::map<std::string, int64_t> map{};
 
 public:
     std::any visitPrintExpr(ExprParser::PrintExprContext *ctx){
@@ -19,6 +20,29 @@ public:
         std::string &&text = ctx->INT()->getSymbol()->getText();
         int64_t value = stol(text);
         return value;
+    }
+
+    std::any visitId(ExprParser::IdContext *ctx){
+        std::string &&id = ctx->ID()->getSymbol()->getText();
+        int64_t value;
+        try {
+            value = map.at(id);
+        } catch(const std::out_of_range &e){
+            std::cout<<std::endl<<"Warning: var "<<id<<" not found, init to zero"<<std::endl; 
+            value = 0;
+        }
+        return value;
+    }
+
+    std::any visitParens(ExprParser::ParensContext *ctx){
+        int64_t value = std::any_cast<int64_t>(visit(ctx->expr()));
+        return value;
+    }
+
+    std::any visitAssign(ExprParser::AssignContext *ctx){
+        std::string &&id = ctx->ID()->getSymbol()->getText();
+        int64_t value = std::any_cast<int64_t>(visit(ctx->expr()));
+        map.insert({id, value});
     }
 
     std::any visitMul(ExprParser::MulContext *ctx){
