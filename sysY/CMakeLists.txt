@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.14)
 project(antlr-sysY)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_C_COMPILER /usr/bin/gcc)
+set(CMAKE_CXX_COMPILER /usr/bin/g++)
+
 
 set(ANTLR_RUNTIME_SOURCE_DIR /home/zhao/Downloads/antlr4/runtime/Cpp)
 set(ANTLR_JAR_LOCATION /usr/local/lib/antlr-4.10.1-complete.jar)

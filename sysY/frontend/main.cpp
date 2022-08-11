@@ -5,7 +5,10 @@
 #include "sysYLexer.h"
 #include "sysYParser.h"
 
+#include "AstVisitor.hpp"
+
 using namespace antlr4;
+using namespace llvm;
 
 int main(int argc, const char** argv){
   if(argc < 2){
@@ -25,6 +28,9 @@ int main(int argc, const char** argv){
   tree::ParseTree *tree = parser.compUnit();
   
   std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
+  
+  //AstVisitor visitor;
+  //visitor.visit(tree);
 
 }
 
