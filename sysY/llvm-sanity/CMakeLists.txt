@@ -17,3 +17,8 @@ target_link_directories(demo_ir PRIVATE "${llvm_build_directory}/lib")
 
 list(APPEND compile_libs LLVMSupport LLVMIRReader LLVMMIRParser LLVMCore)
 target_link_libraries(demo_ir PUBLIC ${compile_libs})
+
+add_custom_target(run-demo-ir ALL 
+  COMMAND ${CMAKE_CURRENT_BINARY_DIR}/demo_ir > ${CMAKE_CURRENT_BINARY_DIR}/output.txt
+  COMMAND diff ${CMAKE_CURRENT_BINARY_DIR}/output.txt ${CMAKE_CURRENT_SOURCE_DIR}/reference.txt
+  DEPENDS demo_ir)
