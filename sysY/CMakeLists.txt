@@ -11,6 +11,10 @@ set(ANTLR_JAR_LOCATION /usr/local/lib/antlr-4.10.1-complete.jar)
 find_program(Java_JAVA_EXECUTABLE "java")
 find_program(Java_JAVAC_EXECUTABLE "javac")
 
+set(llvm_build_directory /home/zhao/Disk/build_llvm1405)
+set(llvm_source_directory /home/zhao/Disk/llvm1405)
+
+add_subdirectory(llvm-sanity)
 add_subdirectory(frontend)
 
 
