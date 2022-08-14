@@ -19,11 +19,10 @@ add_custom_target(GenerateParser
   BYPRODUCTS ${antlr4_generated_src}
 )
 
-set(llvm_build_directory /home/zhao/Disk/build_llvm1405)
+
 link_directories(${llvm_build_directory}/lib)
 include_directories(${llvm_build_directory}/include)
 
-set(llvm_source_directory /home/zhao/Disk/llvm1405)
 include_directories(${llvm_source_directory}/llvm/include)
 
 set(BIN_NAME sysY-compiler)
@@ -43,7 +42,7 @@ target_include_directories(${BIN_NAME} PRIVATE
   ${ANTLR_RUNTIME_SOURCE_DIR}/runtime/src/support
   )
 
-#target_sources(${BIN_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/AstVisitor.cpp)
+target_sources(${BIN_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/AstVisitor.cpp)
 
 target_link_libraries(${BIN_NAME} 
   PUBLIC

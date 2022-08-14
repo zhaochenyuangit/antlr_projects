@@ -5,9 +5,20 @@ using namespace llvm;
 
 std::any AstVisitor::visitCompUnit(sysYParser::CompUnitContext *ctx)
 {
-    LLVMModuleRef mod = LLVMModuleCreateWithName("test.ll");
-    LLVMSetTarget(mod, "riscv64");
+    visitChildren(ctx);
+    TheModule->print(outs(), nullptr);
+    return 0;
+}
 
-    Module *mod_ptr = unwrap(mod);
-    mod_ptr->print(outs(), nullptr);
+std::any AstVisitor::visitVarDecl(sysYParser::VarDeclContext *ctx)
+{
+    for (auto vardef : ctx->varDef())
+    {
+        
+    }
+    if (ctx->bType()->type->getType() == sysYParser::Int)
+    {
+        outs() << "a int decl\n";
+    }
+    return nullptr;
 }

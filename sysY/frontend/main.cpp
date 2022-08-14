@@ -15,7 +15,8 @@ int main(int argc, const char** argv){
     std::cout<<"no input file\n";
     return 1;
   }
-  std::fstream input_file(argv[1]); 
+  const char* input_filename=argv[1];
+  std::fstream input_file(input_filename); 
   if(false == input_file.is_open()){
     std::cout<<"cannot read file: "<< argv[1]<<"\n";
     return 1;
@@ -27,10 +28,10 @@ int main(int argc, const char** argv){
   sysYParser parser(&tokens);
   tree::ParseTree *tree = parser.compUnit();
   
-  std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
+  //std::cout << tree->toStringTree(&parser) << std::endl << std::endl;
   
-  //AstVisitor visitor;
-  //visitor.visit(tree);
+  AstVisitor visitor(input_filename);
+  visitor.visit(tree);
 
 }
 

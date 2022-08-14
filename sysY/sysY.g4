@@ -2,6 +2,7 @@ grammar sysY;
 // Here starts the Lexer
 // keyword
 Int : 'int';
+Float: 'float';
 Void: 'void';
 Const: 'const';
 Return : 'return';
@@ -85,8 +86,7 @@ decl : constDecl | varDecl;
 
 constDecl : 'const' bType constDef (',' constDef)* ';' ;
 
-bType: 'int'
-     | 'float';
+bType: type=('int'|'float');
 
 constDef : Identifier ('[' constExp ']')* '=' constInitVal;
 
@@ -121,21 +121,22 @@ block : '{' (blockItem)* '}';
 blockItem : decl | stmt;
 
 stmt
-    : lVal '=' arithExp ';' # assignment // assignment in sysY do not return a value
-    | (arithExp)? ';' # expStmt
-    | block # blockStmt
-    | 'if' '(' condExp ')' stmt # ifStmt1
-    | 'if' '(' condExp ')' stmt 'else' stmt # ifStmt2
-    | 'while' '(' condExp ')' stmt # whileStmt
-    | 'break' ';' # breakStmt
-    | 'continue' ';' # continueStmt
-    | 'return' (arithExp)? ';' # returnStmt
+    : lVal '=' arithExp ';'     # assignStmt // assignment in sysY do not return a value
+    | (arithExp)? ';'           # expStmt
+    | block                     # blockStmt
+    | 'if' '(' condExp ')' stmt # ifStmt
+    | 'if' '(' condExp ')' stmt 'else' stmt # ifElseStmt
+    | 'while' '(' condExp ')' stmt          # whileStmt
+    | 'break' ';'               # breakStmt
+    | 'continue' ';'            # continueStmt
+    | 'return' (arithExp)? ';'  # returnStmt
     ;
 
 lVal : Identifier ('[' arithExp ']')*;
 
-intNumber :  IntConst;
-floatNumber : FloatConst;
+constNumber 
+    : IntConst # intNumber
+    | FloatConst #floatNumber;
 
 // expression priority
 // unary : + - !
@@ -149,38 +150,37 @@ floatNumber : FloatConst;
 funcRParams : funcRParam (',' funcRParam)*;
 
 funcRParam
-    : arithExp # expAsRParam
-    | STRING # stringAsRParam
+    : arithExp  # expAsRParam
+    | STRING    # stringAsRParam
     ;
 
 primaryExp
-    : lVal # primary1
-    | intNumber # primary2
-    | floatNumber # primary3 
-    | '(' arithExp ')' # primary4
+    : lVal              # primaryLVal
+    | constNumber       # primaryNumber
+    | '(' arithExp ')'  # primaryParen
     ;
 
 unaryExp
-    : primaryExp # unary1
-    | ('+' | '-' | '!') unaryExp # unary2
-    | Identifier '(' (funcRParams)? ')' # unary3
+    : primaryExp                        # unaryPrimary
+    | op=('+' | '-' | '!') unaryExp        # unaryOp
+    | Identifier '(' (funcRParams)? ')' # unaryFuncCall
     ;
 
 // distinguish arithExp from condExp because the sysY language reference
 // states that function-returned values must be int or float
 // and initValue, returnValue, constValue can only be arithmetic values
 arithExp
-    : unaryExp # arith1
-    | arithExp  ('*' | '/' | '%') unaryExp # arith2
-    | arithExp ('+' | '-') arithExp # arith3
+    : unaryExp                              # arithUnary
+    | arithExp  op=('*' | '/' | '%') unaryExp  # arithMul
+    | arithExp op=('+' | '-') arithExp         # arithAdd
     ;
 
 condExp
-    : arithExp  # cond1
-    | condExp ('<' | '>' | '<=' | '>=') arithExp # cond2
-    | condExp ('==' | '!=') condExp # cond3
-    | condExp '&&' condExp # cond4
-    | condExp'||' condExp # cond5
+    : arithExp                                   # condArith
+    | condExp op=('<' | '>' | '<=' | '>=') arithExp # condCompare
+    | condExp op=('==' | '!=') condExp              # condEqual
+    | condExp '&&' condExp                      # condAnd
+    | condExp'||' condExp                       # condOr
     ;
 
 constExp // constExp must be a compile-time arith constant

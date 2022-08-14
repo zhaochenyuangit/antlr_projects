@@ -8,13 +8,27 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IRBuilder.h"
 
-#include "llvm/Support/Error.h" 
+#include "llvm/Support/Error.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
 
-
-class AstVisitor : public sysYBaseVisitor  {
+namespace llvm{
+class AstVisitor : public sysYBaseVisitor
+{
+private:
+  LLVMContext TheContext;
+  std::unique_ptr<Module> TheModule;
+  std::map<std::string, Value *> NamedValues;
 public:
-
-  virtual std::any visitCompUnit(sysYParser::CompUnitContext *ctx) override;
+  AstVisitor(const char* source_file_name){
+    TheModule = std::make_unique<Module>("test.ll", TheContext);
+    TheModule->setSourceFileName(source_file_name);
+    TheModule->setTargetTriple("riscv64");
+  }
+  std::any visitCompUnit(sysYParser::CompUnitContext *ctx) override;
+  std::any visitVarDecl(sysYParser::VarDeclContext *ctx) override;
+  //std::any visitUninitVarDef(sysYParser::UninitVarDefContext *ctx) override ;
+  //std::any visitInitVarDef(sysYParser::InitVarDefContext *ctx) override;
 };
+}
+
