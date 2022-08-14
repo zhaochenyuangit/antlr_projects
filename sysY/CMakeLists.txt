@@ -5,6 +5,9 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_C_COMPILER /usr/bin/gcc)
 set(CMAKE_CXX_COMPILER /usr/bin/g++)
 
+if(${CMAKE_BINARY_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+message(FATAL_ERROR "in-tree build is not allowed")
+endif()
 
 set(ANTLR_RUNTIME_SOURCE_DIR /home/zhao/Downloads/antlr4/runtime/Cpp)
 set(ANTLR_JAR_LOCATION /usr/local/lib/antlr-4.10.1-complete.jar)
