@@ -12,20 +12,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Casting.h"
 
-namespace llvm{
+#include "SymbolTable.hpp"
 
-template<typename T>
-T cast_any(T value){
-  try
-        {
-            T v = std::any_cast<T>(value);
-            return v;
-        }
-        catch (std::bad_any_cast e)
-        {
-            errs()<<"error: badcast\n";
-        }
-}
+namespace llvm{
 
 class AstVisitor : public sysYBaseVisitor
 {
@@ -33,7 +22,7 @@ private:
   std::unique_ptr<LLVMContext> TheContext;
   std::unique_ptr<Module> TheModule;
   std::unique_ptr<IRBuilder<>> Builder;
-  std::map<std::string, Value *> NamedValues;
+  BaseScope CurrentScope;
 public:
   AstVisitor(const char* source_file_name){
     TheContext = std::make_unique<LLVMContext>();

@@ -1,6 +1,7 @@
 #include "AstVisitor.hpp"
 #include <any>
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/ADT/StringRef.h"
 #include <string>
 #include <cstdlib>
 
@@ -19,15 +20,9 @@ std::any AstVisitor::visitVarDecl(sysYParser::VarDeclContext *ctx)
     size_t tok = ctx->bType()->type->getType();
     for (auto vardef : ctx->varDef())
     {
-        try
-        {
             Value *v = std::any_cast<Value *>(visit(vardef));
             v = ConstantInt::get(IntegerType::getInt16Ty(*TheContext), 1);
-        }
-        catch (std::bad_any_cast e)
-        {
-            errs() << "error: badcast\n";
-        }
+        
     }
 
     return nullptr;
