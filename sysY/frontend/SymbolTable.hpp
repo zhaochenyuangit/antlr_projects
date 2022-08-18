@@ -5,30 +5,45 @@
 
 namespace llvm
 {
-
-class BaseScope
-{
-    std::map<StringRef, Type *> Symbols;
-    size_t depth;
-    BaseScope *Parent;
-
-public:
-    BaseScope() : BaseScope(0, nullptr){};
-    BaseScope(size_t d, BaseScope *p) : depth(d), Parent(p){};
-    bool define(StringRef name, Type *ty)
+    struct SymbolEntry
     {
-        auto ret = Symbols.insert({name, ty});
-        return /*error?*/(!ret.second);
-    }
-    Type* resolve(StringRef name)
+        Type *ty;
+        Constant *init_value;
+    };
+
+    class BaseScope
     {
-        if(Type* ty = Symbols[name]){
-            return ty;
-        }else if(nullptr!=Parent){
-            return Parent->resolve(name);
+        std::map<std::string, std::shared_ptr<SymbolEntry>> Symbols;
+        size_t depth;
+        BaseScope *Parent;
+
+    public:
+        BaseScope() : BaseScope(0, nullptr) {}
+        BaseScope(size_t d, BaseScope *p) : depth(d), Parent(p) {}
+        bool define(std::string name, std::shared_ptr<SymbolEntry> entry)
+        {
+            auto ret = Symbols.insert({name, entry});
+            return /*error?*/ (!ret.second);
         }
-        return nullptr;
-    }
-};
+        SymbolEntry *resolve(std::string name)
+        {
+            auto it = Symbols.find(name);
+            if (it != Symbols.end()){
+                return it->second.get();
+            }
+            else if (nullptr != Parent)
+            {
+                return Parent->resolve(name);
+            }
+            return nullptr;
+        }
+        BaseScope *getParent() { return this->Parent; }
+        size_t getDepth() { return this->depth; }
+        void print(){
+            for(auto entry: Symbols){
+                outs()<<entry.first<<" "<<entry.second->ty->getTypeID()<<"\n";
+            }
+        }
+    };
 
 }

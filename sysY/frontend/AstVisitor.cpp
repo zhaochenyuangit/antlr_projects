@@ -18,38 +18,75 @@ std::any AstVisitor::visitCompUnit(sysYParser::CompUnitContext *ctx)
 std::any AstVisitor::visitVarDecl(sysYParser::VarDeclContext *ctx)
 {
     size_t tok = ctx->bType()->type->getType();
+    helper.CurrTypeTok = tok;
     for (auto vardef : ctx->varDef())
-    {
-            Value *v = std::any_cast<Value *>(visit(vardef));
-            v = ConstantInt::get(IntegerType::getInt16Ty(*TheContext), 1);
-        
-    }
+        visit(vardef);
 
     return nullptr;
 }
 
 std::any AstVisitor::visitInitVarDef(sysYParser::InitVarDefContext *ctx)
 {
-    std::string &&id = ctx->Identifier()->getText();
+    std::string id = ctx->Identifier()->getText();
     Value *v = std::any_cast<Value *>(visit(ctx->initVal()));
     Constant *const_v = dyn_cast<Constant>(v);
     if (nullptr == const_v)
     {
         errs() << "initializer must be a constant!\n";
     }
-
-    GlobalVariable *global_var = dyn_cast<GlobalVariable>(TheModule->getOrInsertGlobal(id, IntegerType::getInt32Ty(*TheContext)));
-    //Constant* expr = BinaryConstantExpr();
-    if (Constant *derived = dyn_cast<Constant>(v))
+    size_t type = helper.CurrTypeTok;
+    // It is a global var if declared in global scope
+    if (0 == CurrScope->getDepth())
     {
-        global_var->setInitializer(derived);
-        global_var->setAlignment(Align{4});
+        if (type == sysYParser::Int)
+        {
+            GlobalVariable *global_var = dyn_cast<GlobalVariable>(TheModule->getOrInsertGlobal(id, IntegerType::getInt32Ty(*TheContext)));
+            // Constant* expr = BinaryConstantExpr();
+            global_var->setInitializer(const_v);
+            global_var->setAlignment(Align{4});
+            auto entry = std::make_shared<SymbolEntry>(SymbolEntry{IntegerType::getInt32Ty(*TheContext), const_v});
+            CurrScope->define(id, entry);
+        }
+        else if (type == sysYParser::Float)
+        {
+            GlobalVariable *global_var = dyn_cast<GlobalVariable>(TheModule->getOrInsertGlobal(id, Type::getFloatTy(*TheContext)));
+            global_var->setInitializer(const_v);
+            global_var->setAlignment(Align(4));
+            auto entry = std::make_shared<SymbolEntry>(SymbolEntry{Type::getFloatTy(*TheContext), const_v});
+            CurrScope->define(id, entry);
+        }
     }
-    return v;
+    return nullptr;
 }
 
 std::any AstVisitor::visitUninitVarDef(sysYParser::UninitVarDefContext *ctx)
 {
+    std::string id = ctx->Identifier()->getText();
+    
+    size_t type = helper.CurrTypeTok;
+    // It is a global var if declared in global scope
+    if (0 == CurrScope->getDepth())
+    {
+        if (type == sysYParser::Int)
+        {
+            GlobalVariable *global_var = dyn_cast<GlobalVariable>(TheModule->getOrInsertGlobal(id, IntegerType::getInt32Ty(*TheContext)));
+            // Constant* expr = BinaryConstantExpr();
+            auto zero_init = ConstantInt::get(IntegerType::getInt32Ty(*TheContext),0,false);
+            global_var->setInitializer(zero_init);
+            global_var->setAlignment(Align{4});
+            auto entry = std::make_shared<SymbolEntry>(SymbolEntry{IntegerType::getInt32Ty(*TheContext), zero_init});
+            CurrScope->define(id, entry);
+        }
+        else if (type == sysYParser::Float)
+        {
+            GlobalVariable *global_var = dyn_cast<GlobalVariable>(TheModule->getOrInsertGlobal(id, Type::getFloatTy(*TheContext)));
+            auto zero_init = ConstantInt::get(IntegerType::getFloatTy(*TheContext),0,false);
+            global_var->setInitializer(zero_init);
+            global_var->setAlignment(Align(4));
+            auto entry = std::make_shared<SymbolEntry>(SymbolEntry{Type::getFloatTy(*TheContext), zero_init});
+            CurrScope->define(id, entry);
+        }
+    }
     return nullptr;
 }
 
