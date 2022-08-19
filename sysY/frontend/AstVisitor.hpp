@@ -28,17 +28,29 @@ namespace llvm
     std::unique_ptr<LLVMContext> TheContext;
     std::unique_ptr<Module> TheModule;
     std::unique_ptr<IRBuilder<>> Builder;
-    std::unique_ptr<BaseScope> CurrScope;
+    std::shared_ptr<BaseScope> CurrScope;
     ParserHelper helper;
-    
+
   public:
     AstVisitor(const char *source_file_name)
     {
-      CurrScope = std::make_unique<BaseScope>();
+      CurrScope = std::make_shared<BaseScope>();
       TheContext = std::make_unique<LLVMContext>();
       TheModule = std::make_unique<Module>("test.ll", *TheContext);
       TheModule->setSourceFileName(source_file_name);
       TheModule->setTargetTriple("riscv64");
+    }
+    void pushScope(){
+      size_t depth = CurrScope->getDepth();
+      auto thisScope = CurrScope;
+      CurrScope = std::make_shared<BaseScope>(depth+1, thisScope);
+    }
+    void popScope(){
+      if(nullptr==CurrScope->getParent()){
+        errs()<<"already at global scope, cannot pop anymore!\n";
+        return;
+      }
+      CurrScope = CurrScope->getParent();
     }
     std::any visitCompUnit(sysYParser::CompUnitContext *ctx) override;
     std::any visitVarDecl(sysYParser::VarDeclContext *ctx) override;
@@ -49,5 +61,8 @@ namespace llvm
     std::any visitLVal(sysYParser::LValContext *ctx) override;
     std::any visitFloatNumber(sysYParser::FloatNumberContext *ctx) override;
     std::any visitIntNumber(sysYParser::IntNumberContext *ctx) override;
+    std::any visitFuncDef(sysYParser::FuncDefContext *ctx) override;
+    std::any visitFuncFParams(sysYParser::FuncFParamsContext *ctx) override;
+    std::any visitFuncFParam(sysYParser::FuncFParamContext *ctx) override;
   };
 }

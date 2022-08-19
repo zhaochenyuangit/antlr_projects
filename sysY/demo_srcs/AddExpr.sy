@@ -1,4 +1,8 @@
-int a=2;
-int main() {
+int a=2,b=1,c;
+float d,f = 1.0;
+
+const int con = 20;
+//const int uncon;
+int main(int foo, float bar) {
   return 1 + a * 3;
 }

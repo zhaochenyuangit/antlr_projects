@@ -109,7 +109,7 @@ initVal
 
 funcDef : funcType Identifier '(' (funcFParams)? ')' block;
 
-funcType : 'void' | 'int' | 'float';
+funcType : type=('void' | 'int' | 'float');
 
 funcFParams : funcFParam (',' funcFParam)*;
 
